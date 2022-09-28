@@ -7,13 +7,13 @@ For you can wirte scripts in a language you want. The only things you have to do
 
 This repo will show some simple plugins for `confluent cli`
 ```bash
-           Plugin Name                     |                              File Path                                
--------------------------------------------+-----------------------------------------------------------------------
-  confluent api key analysis               | /Users/cmutzlitz/Demos/confluent-cli/confluent-api-key-analysis       
-  confluent check ccloud wasty             | /Users/cmutzlitz/Demos/confluent-cli/confluent-check-ccloud-wasty     
-  confluent get service quota              | /Users/cmutzlitz/Demos/confluent-cli/confluent-get-service-quota      
-  confluent ksqldb topic analysis          | /Users/cmutzlitz/Demos/confluent-cli/confluent-ksqldb-topic-analysis  
-  confluent sa wo keys                     | /Users/cmutzlitz/Demos/confluent-cli/confluent-sa-wo-keys   
+           Plugin Name                     |              File Path                                
+-------------------------------------------+---------------------------------------------------
+  confluent api key analysis               | /confluent-cli/confluent-api-key-analysis       
+  confluent check ccloud wasty             | /confluent-cli/confluent-check-ccloud-wasty     
+  confluent get service quota              | /confluent-cli/confluent-get-service-quota      
+  confluent ksqldb topic analysis          | s/confluent-cli/confluent-ksqldb-topic-analysis  
+  confluent sa wo keys                     | /Demos/confluent-cli/confluent-sa-wo-keys   
 ```
 * confluent api key analysis : will find api key with dropped resources
 * confluent check ccloud wasty: will count all billable resources
@@ -21,4 +21,4 @@ This repo will show some simple plugins for `confluent cli`
 * confluent ksqldb topic analysis: Will show all ksqlDB topics which having no ksqlDB cluster anymore and could be deleted
 * confluent sa wo keys: will find service accounts without a API Key
 
-I do have bash and Python scripts.
+I do have bash and Python scripts. So, please install python 3.8.
