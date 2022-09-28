@@ -7,7 +7,7 @@ dedicated=0
 ksqldb=0
 connector=0
 
-echo "check out if CEMEA SE team is wasty or tasty...wait a couple of seconds..."
+echo "check out if team is wasty or tasty...wait a couple of seconds..."
 
 # check if standard clusters are running
 /usr/local/bin/confluent login >/dev/null

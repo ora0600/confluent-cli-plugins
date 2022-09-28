@@ -12,7 +12,7 @@ echo "search for servive accounts having no API key..."
 
 # Call API key analytics
 echo "please wait, the analysis will take a while..."
-/usr/local/Cellar/python@3.8/3.8.6_2/bin/python3 /Users/cmutzlitz/Demos/confluent-cli/sa-analytics.py /tmp/key_list.json /tmp/serviceaccount_list.json 
+/usr/local/Cellar/python@3.8/3.8.6_2/bin/python3 /confluent-cli/sa-analytics.py /tmp/key_list.json /tmp/serviceaccount_list.json 
 
 echo "Service Account analysis finished"
 

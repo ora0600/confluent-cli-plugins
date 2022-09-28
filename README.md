@@ -20,3 +20,5 @@ This repo will show some simple plugins for `confluent cli`
 * confluent get service quota: will give an overview of applied service quota limits, and the current usage
 * confluent ksqldb topic analysis: Will show all ksqlDB topics which having no ksqlDB cluster anymore and could be deleted
 * confluent sa wo keys: will find service accounts without a API Key
+
+I do have bash and Python scripts.

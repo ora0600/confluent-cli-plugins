@@ -55,12 +55,4 @@ curl --request GET \
 echo "#################" >> service_quota_${now}.txt 2>/dev/null
 echo "End of Show current service quota usage from today: ${now}" 
 
-# to show all run the script
-# ./00_get_service_quota.sh
-
-
-# merge to one json
-#jq -s .  servicequota_org.json  servicequota_env.json servicequota_network.json servicequota_kafka.json servicequota_sa.json servicequota_user.json
-
-# SShow results
 cat service_quota_${now}.txt
