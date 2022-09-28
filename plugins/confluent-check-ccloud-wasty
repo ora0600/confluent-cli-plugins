@@ -1,0 +1,52 @@
+#!/bin/bash
+
+# Counter
+basic=0
+standard=0
+dedicated=0
+ksqldb=0
+connector=0
+
+echo "check out if CEMEA SE team is wasty or tasty...wait a couple of seconds..."
+
+# check if standard clusters are running
+/usr/local/bin/confluent login >/dev/null
+
+/usr/local/bin/confluent environment list -o yaml > /tmp/env_list.txt 2>/dev/null
+env_list=($(cat /tmp/env_list.txt | grep id: | cut -d ':' -f 2))
+
+for f in "${env_list[@]}"; do
+    #echo " Environment ${f}"
+    /usr/local/bin/confluent environment use ${f} >/dev/null
+    #echo " Cluster list for Environment ${f}"
+    /usr/local/bin/confluent kafka cluster list -o yaml > /tmp/cluster.txt 2>/dev/null
+    cluster_list=($(cat /tmp/cluster.txt | grep id: | cut -d ':' -f 2))
+    basic_cluster=($(cat /tmp/cluster.txt | grep BASIC | cut -d ':' -f 2))
+    standard_cluster=($(cat /tmp/cluster.txt | grep STANDARD | cut -d ':' -f 2))
+    dedicated_cluster=($(cat /tmp/cluster.txt | grep DEDICATED | cut -d ':' -f 2))
+    #echo " KsqlDB list for Environment ${f}"
+#    /usr/local/bin/confluent ksql cluster list --environment ${f} -o yaml > /tmp/ksqldb.txt
+    /usr/local/bin/confluent ksql cluster list -o yaml > /tmp/ksqldb.txt 2>/dev/null
+    ksqldb=$((ksqldb+$(cat /tmp/ksqldb.txt | grep id: | cut -d ':' -f 2 | wc -l)))
+    if [[ ! -z "$basic_cluster" ]]
+    then
+        basic=$((basic+$(echo ${basic_cluster} | wc -l)))
+    fi
+    if [[ ! -z "$standard_cluster" ]]
+    then
+        standard=$((standard+$(echo ${standard_cluster} | wc -l)))
+    fi        
+    if [[ ! -z "$dedicated_cluster" ]]
+    then   
+        dedicated=$((dedicated+$(echo ${dedicated_cluster} | wc -l)))
+    fi
+    for c in "${cluster_list[@]}"; do
+        #echo " use cluster ${c}"
+        /usr/local/bin/confluent kafka cluster use ${c} 2>/dev/null
+        #echo "list connectors for cluster ${c} in environment ${f}"
+        /usr/local/bin/confluent connect list --cluster ${c} --environment ${f} -o yaml > /tmp/connector.txt 2>/dev/null
+        connector=$((connector+$(cat /tmp/connector.txt | grep id: | cut -d ':' -f 2 | wc -l)))
+    done
+done
+echo " Running  ${basic} BASIC Cluster, ${standard} STANDARD Clusters, ${dedicated} DEDICATED Clusters, ${ksqldb} ksqlDB Apps and ${connector} Connectors " 
+

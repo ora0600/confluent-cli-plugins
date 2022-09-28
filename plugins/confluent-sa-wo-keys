@@ -1,0 +1,18 @@
+#!/bin/bash
+
+echo "search for servive accounts having no API key..."
+# check if standard clusters are running login
+/usr/local/bin/confluent login >/dev/null
+
+# get alles API Keys
+/usr/local/bin/confluent api-key list -o json > /tmp/key_list.json 2>/dev/null
+
+# get all service accounts
+/usr/local/bin/confluent iam service-account list -o json > /tmp/serviceaccount_list.json 2>/dev/null
+
+# Call API key analytics
+echo "please wait, the analysis will take a while..."
+/usr/local/Cellar/python@3.8/3.8.6_2/bin/python3 /Users/cmutzlitz/Demos/confluent-cli/sa-analytics.py /tmp/key_list.json /tmp/serviceaccount_list.json 
+
+echo "Service Account analysis finished"
+

@@ -1,0 +1,66 @@
+#!/bin/bash
+var=`date +"%FORMAT_STRING"`
+now=`date +"%Y-%m-%d"`
+echo "Show current service quota usage from today: ${now}"
+user='add your own key'
+
+# service quota sample
+cd ~/Demos/ccloud/service-quota
+echo "#################" > service_quota_${now}.txt 2>/dev/null
+echo "Which quota codes are available" >> service_quota_${now}.txt 2>/dev/null
+curl --request GET \
+     --url 'https://api.confluent.cloud/service-quota/v1/scopes' \
+     --user ${user} \
+     | jq '.data[] | {id}'  >> service_quota_${now}.txt 2>/dev/null
+echo "#################" >> service_quota_${now}.txt 2>/dev/null
+echo "quota on organization level" >> service_quota_${now}.txt 2>/dev/null
+curl --request GET \
+     --url 'https://api.confluent.cloud/service-quota/v1/applied-quotas?scope=organization' \
+     --user ${user} \
+     | jq '.data[] | {display_name,id,applied_limit,usage}' >> service_quota_${now}.txt 2>/dev/null
+echo "#################" >> service_quota_${now}.txt 2>/dev/null
+echo "Quota Service Accounts" >> service_quota_${now}.txt 2>/dev/null
+curl --request GET \
+     --url 'https://api.confluent.cloud/service-quota/v1/applied-quotas?scope=service_account' \
+     --user ${user} \
+     | jq '.data[] | .user.id,{display_name,id,applied_limit,usage}' >> service_quota_${now}.txt
+echo "#################" >> service_quota_${now}.txt 2>/dev/null
+echo "Quota Service User" >> service_quota_${now}.txt 2>/dev/null
+curl --request GET \
+     --url 'https://api.confluent.cloud/service-quota/v1/applied-quotas?scope=user_account' \
+     --user ${user} \
+     | jq '.data[] | .user.id,{display_name,id,applied_limit,usage}' >> service_quota_${now}.txt 2>/dev/null
+#curl --request GET \
+#     --url 'https://api.confluent.cloud/service-quota/v1/applied-quotas/iam.max_kafka_api_keys.per_user' \
+#     --user ${user} \
+#     | jq '.data[] | .user.id,{display_name,id,applied_limit,usage}' >> service_quota_${now}.txt
+echo "#################" >> service_quota_${now}.txt 2>/dev/null
+echo "Quota on environment level" >> service_quota_${now}.txt 2>/dev/null
+curl --request GET \
+     --url 'https://api.confluent.cloud/service-quota/v1/applied-quotas?scope=environment' \
+     --user ${user} \
+     | jq '.data[] | .environment.kind,.environment.id,{display_name,id,applied_limit,usage}' >> service_quota_${now}.txt 2>/dev/null
+echo "#################" >> service_quota_${now}.txt 2>/dev/null
+echo "Quota Kafka cluster" >> service_quota_${now}.txt 2>/dev/null
+curl --request GET \
+     --url 'https://api.confluent.cloud/service-quota/v1/applied-quotas?scope=kafka_cluster' \
+     --user ${user} \
+     | jq  >> service_quota_${now}.txt 2>/dev/null #'.environment.kind,.environment.id,.kafka_cluster.kind,.kafka_cluster.id,{display_name,id,applied_limit,usage}'
+echo "#################" >> service_quota_${now}.txt 2>/dev/null
+echo "quota on Network level" >> service_quota_${now}.txt 2>/dev/null
+curl --request GET \
+     --url 'https://api.confluent.cloud/service-quota/v1/applied-quotas?scope=network' \
+     --user ${user} \
+     | jq '.data[] | .environment.kind,.environment.id,{display_name,id,applied_limit,usage}' >> service_quota_${now}.txt 2>/dev/null
+echo "#################" >> service_quota_${now}.txt 2>/dev/null
+echo "End of Show current service quota usage from today: ${now}" 
+
+# to show all run the script
+# ./00_get_service_quota.sh
+
+
+# merge to one json
+#jq -s .  servicequota_org.json  servicequota_env.json servicequota_network.json servicequota_kafka.json servicequota_sa.json servicequota_user.json
+
+# SShow results
+cat service_quota_${now}.txt

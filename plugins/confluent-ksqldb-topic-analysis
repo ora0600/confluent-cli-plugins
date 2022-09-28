@@ -1,0 +1,15 @@
+#!/bin/bash
+
+echo "search for ksqldb topics which having no ksqldb cluster anymore...."
+# check if standard clusters are running login
+/usr/local/bin/confluent login >/dev/null
+
+# get all environments
+/usr/local/bin/confluent environment list -o json > /tmp/environment_list.json 2>/dev/null
+
+# Call API key analytics
+echo "please wait, the analysis will take a while..."
+/usr/local/Cellar/python@3.8/3.8.6_2/bin/python3 /Users/cmutzlitz/Demos/confluent-cli/ksqldb-topic-analytics.py /tmp/environment_list.json 
+
+echo "API key analysis finished"
+

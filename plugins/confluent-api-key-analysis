@@ -1,0 +1,19 @@
+#!/bin/bash
+
+echo "search for API key zombies...."
+echo "...is the user or service account or cluster still available...."
+# check if standard clusters are running login
+/usr/local/bin/confluent login >/dev/null
+
+# get alles API Keys
+/usr/local/bin/confluent api-key list -o json > /tmp/key_list.json 2>/dev/null
+
+# get all environments
+/usr/local/bin/confluent environment list -o json > /tmp/environment_list.json 2>/dev/null
+
+# Call API key analytics
+echo "please wait, the analysis will take a while..."
+/usr/local/Cellar/python@3.8/3.8.6_2/bin/python3 /Users/cmutzlitz/Demos/confluent-cli/api-key-analytics.py /tmp/key_list.json /tmp/environment_list.json 
+
+echo "API key analysis finished"
+
