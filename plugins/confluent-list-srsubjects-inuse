@@ -1,0 +1,3 @@
+#!/bin/bash
+## Please modify the path of the file srsubjects_inuse.py
+python3 srsubjects_inuse.py
