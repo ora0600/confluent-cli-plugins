@@ -7,7 +7,8 @@ dedicated=0
 ksqldb=0
 connector=0
 
-echo "check out if team is wasty or tasty...wait a couple of seconds..."
+echo "check out if confluent cloud org is wasty or tasty...wait a couple of seconds..."
+echo "*******************************************************************************************************************************"
 
 # check if standard clusters are running
 /usr/local/bin/confluent login >/dev/null
@@ -16,17 +17,27 @@ echo "check out if team is wasty or tasty...wait a couple of seconds..."
 env_list=($(cat /tmp/env_list.txt | grep id: | cut -d ':' -f 2))
 
 for f in "${env_list[@]}"; do
-    #echo " Environment ${f}"
-    /usr/local/bin/confluent environment use ${f} >/dev/null
+    echo "--> Environment ${f}"
+    confluent environment use ${f} >/dev/null
     #echo " Cluster list for Environment ${f}"
-    /usr/local/bin/confluent kafka cluster list -o yaml > /tmp/cluster.txt 2>/dev/null
+    confluent schema-registry cluster describe -o yaml > /tmp/sr.txt 2>/dev/null
+    srpackage=($(cat /tmp/sr.txt | grep package: | cut -d ':' -f 2))
+    srservice_provider=($(cat /tmp/sr.txt | grep service_provider: | cut -d ':' -f 2))
+    srservice_provider_region=($(cat /tmp/sr.txt | grep service_provider_region: | cut -d ':' -f 2))
+    srused_schemas=($(cat /tmp/sr.txt | grep used_schemas: | cut -d ':' -f 2))
+    echo "----> SR package ${srpackage} in ${srservice_provider} region ${srservice_provider_region} used schemas=${srused_schemas}"
+    confluent kafka cluster list -o yaml > /tmp/cluster.txt 2>/dev/null
+    echo "----> Kafka clusters...."
+    confluent kafka cluster list -o human 
     cluster_list=($(cat /tmp/cluster.txt | grep id: | cut -d ':' -f 2))
     basic_cluster=($(cat /tmp/cluster.txt | grep BASIC | cut -d ':' -f 2))
     standard_cluster=($(cat /tmp/cluster.txt | grep STANDARD | cut -d ':' -f 2))
     dedicated_cluster=($(cat /tmp/cluster.txt | grep DEDICATED | cut -d ':' -f 2))
     #echo " KsqlDB list for Environment ${f}"
 #    /usr/local/bin/confluent ksql cluster list --environment ${f} -o yaml > /tmp/ksqldb.txt
-    /usr/local/bin/confluent ksql cluster list -o yaml > /tmp/ksqldb.txt 2>/dev/null
+    echo "----> ksqlDB clusters...."
+    confluent ksql cluster list -o human
+    confluent ksql cluster list -o yaml > /tmp/ksqldb.txt 2>/dev/null
     ksqldb=$((ksqldb+$(cat /tmp/ksqldb.txt | grep id: | cut -d ':' -f 2 | wc -l)))
     if [[ ! -z "$basic_cluster" ]]
     then
@@ -42,11 +53,16 @@ for f in "${env_list[@]}"; do
     fi
     for c in "${cluster_list[@]}"; do
         #echo " use cluster ${c}"
-        /usr/local/bin/confluent kafka cluster use ${c} 2>/dev/null
+        confluent kafka cluster use ${c} 2>/dev/null
         #echo "list connectors for cluster ${c} in environment ${f}"
-        /usr/local/bin/confluent connect list --cluster ${c} --environment ${f} -o yaml > /tmp/connector.txt 2>/dev/null
+        echo "----> Connectors...."
+        confluent connect list --cluster ${c} --environment ${f} -o human
+        confluent connect list --cluster ${c} --environment ${f} -o yaml > /tmp/connector.txt 2>/dev/null
         connector=$((connector+$(cat /tmp/connector.txt | grep id: | cut -d ':' -f 2 | wc -l)))
     done
+    echo "--> END Environment ${f}"
+    echo "*******************************************************************************************************************************"
 done
-echo " Running  ${basic} BASIC Cluster, ${standard} STANDARD Clusters, ${dedicated} DEDICATED Clusters, ${ksqldb} ksqlDB Apps and ${connector} Connectors " 
-
+echo "*******************************************************************************************************************************"
+echo "** Running  ${basic} BASIC Cluster, ${standard} STANDARD Clusters, ${dedicated} DEDICATED Clusters, ${ksqldb} ksqlDB Apps and ${connector} Connectors **" 
+echo "*******************************************************************************************************************************"
