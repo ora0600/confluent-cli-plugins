@@ -5,9 +5,9 @@
 import requests
 from requests.auth import HTTPBasicAuth
 
-sr_apikey = '5E3ATK7AFNBZ'
-sr_apisecret = 'Yc+H885kGhVSeKzr+aApKKTCCyFPxcPSt0ZbrLIDXaKBVX41ml0pAf+yr'
-sr_url = 'https://psrc-opw.europe-west.gcp.confluent.cloud'
+sr_apikey = 'YOURKEY'
+sr_apisecret = 'YOURSECRET'
+sr_url = 'YOURURL'
 
 auth = HTTPBasicAuth(sr_apikey, sr_apisecret)
 r = requests.get(sr_url + '/subjects', auth=auth)
