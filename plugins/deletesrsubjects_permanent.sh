@@ -7,6 +7,6 @@
 ## However, to delete PERMANENTLY subjects, they need to be first SOFT DELETED.
 ## This means subjects that are not SOFT DELETED - means IN USE - can't be PERMANENTLY DELETED.
 
-curl -X GET -u "APIKEY:APISECRET" https://psrc-opw.europe-west.gcp.confluent.cloud/subjects?deleted=true|jq |awk -F '"' '{print $2}' >subjects_todelete.txt
+curl -X GET -u "APIKEY:APISECRET" https://YOURSR.confluent.cloud/subjects?deleted=true|jq |awk -F '"' '{print $2}' >subjects_todelete.txt
 
-while read line; do curl  -X DELETE  -u "APIKEY:APISECRET" https://psrc-opw.europe-west.gcp.confluent.cloud/subjects/$line?permanent=true; done< subjects_todelete.txt
+while read line; do curl  -X DELETE  -u "APIKEY:APISECRET" https://YOURSR.confluent.cloud/subjects/$line?permanent=true; done< subjects_todelete.txt
