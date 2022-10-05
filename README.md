@@ -12,11 +12,11 @@ This repo will show some simple plugins for `confluent cli`
   confluent api key analysis               | /confluent-cli/confluent-api-key-analysis       
   confluent check ccloud wasty             | /confluent-cli/confluent-check-ccloud-wasty     
   confluent get service quota              | /confluent-cli/confluent-get-service-quota      
-  confluent ksqldb topic analysis          | s/confluent-cli/confluent-ksqldb-topic-analysis  
-  confluent sa wo keys                     | /Demos/confluent-cli/confluent-sa-wo-keys   
-  confluent list srsubjects inuse          | /plugins/confluent-list-srsubjects-inuse
-  confluent list srsubjects all            | /plugins/confluent-list-srsubjects-all
-  confluent delete srsubjects permanent    | /plugins/confluent-delete-srsubjects-permanent
+  confluent ksqldb topic analysis          | /confluent-cli/confluent-ksqldb-topic-analysis  
+  confluent sa wo keys                     | /confluent-cli/confluent-sa-wo-keys   
+  confluent list srsubjects inuse          | /confluent-cli/confluent-list-srsubjects-inuse
+  confluent list srsubjects all            | /confluent-cli/confluent-list-srsubjects-all
+  confluent delete srsubjects permanent    | /confluent-cli/confluent-delete-srsubjects-permanent
 ```
 * confluent api key analysis : will find api key with dropped resources
 * confluent check ccloud wasty: will count all billable resources
@@ -27,7 +27,7 @@ This repo will show some simple plugins for `confluent cli`
 * confluent confluent list srsubjects all: will list ALL your Confluent Cloud Schema Registry subjects and versions that are IN USE and SOFT DELETED
 * confluent delete srsubjects permanent: will delete your all SOFT DELETED SR subjects. PLEASE, test it first in a test env before you use it in your prod env. DISCLAIMER: You are using it at your own risk. 
 
-
+Please change the script with your own API Keys and REST URLs.
 
 
 I do have bash and Python scripts. So, please install python 3.8.
