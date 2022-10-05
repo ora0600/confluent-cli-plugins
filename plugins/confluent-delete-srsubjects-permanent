@@ -1,3 +1,6 @@
 #!/bin/bash
 ## Please modify the path of the file deletesrsubjects_permanent.sh
-deletesrsubjects_permanent.sh
+
+curl -X GET -u "APIKEY:APISECRET" https://YOURSR.confluent.cloud/subjects?deleted=true|jq |awk -F '"' '{print $2}' >subjects_todelete.txt
+
+while read line; do curl  -X DELETE  -u "APIKEY:APISECRET" https://YOURSR.confluent.cloud/subjects/$line?permanent=true | jq; done< subjects_todelete.txt
