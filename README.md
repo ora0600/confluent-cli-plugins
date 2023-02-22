@@ -31,6 +31,8 @@ This repo will show some simple plugins for `confluent cli`
 * confluent delete srsubjects permanent: will delete your all SOFT DELETED SR subjects. PLEASE, test it first in a test env before you use it in your prod env. 
 * confluent del orphaned acls  : Print out where could be a problem with orphaned ACLs
 * confluent recently used api keys: print out API keys used so far, all other API keys could be an option to delete.
+
+
 DISCLAIMER: You are using it at your own risk. Here are only samples of useful tools.
 
 Please change the script with your own API Keys and REST URLs.
