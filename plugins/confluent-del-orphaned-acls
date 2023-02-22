@@ -1,0 +1,69 @@
+#!/bin/bash
+now=$(date +"%d.%m.%Y")
+report="/tmp/ccloud-orphaned-acls-"${now}".txt"
+
+# Counter
+totalacls=0
+totalaclscurl=0
+totalenvs=0
+totalclusters=0
+
+echo "search for orphaned ACLs having no account aligned..."
+echo "********************************* REPORT Orphanded ACLS ${now} **************************************************" > $report
+
+# check if standard clusters are running login
+/usr/local/bin/confluent login >/dev/null
+
+# get all environment and loop though environment and clustr
+/usr/local/bin/confluent environment list -o yaml > /tmp/env_list.txt 2>/dev/null
+env_list=($(cat /tmp/env_list.txt | grep id: | cut -d ':' -f 2))
+
+for f in "${env_list[@]}"; do
+    echo "--> Environment ${f}"  >> $report
+    confluent environment use ${f} >/dev/null
+    totalenvs=$((totalenvs+1)) 
+    echo "----> Kafka clusters...."  >> $report
+    confluent kafka cluster list -o yaml > /tmp/cluster.txt 2>/dev/null
+    #confluent kafka cluster list -o human 
+    totalclusters=$((totalclusters+1))
+    cluster_list=($(cat /tmp/cluster.txt | grep id: | cut -d ':' -f 2))
+    # loop through clusters in environment
+    echo "" > /tmp/clusteracls.txt
+    for c in "${cluster_list[@]}"; do
+        #echo " use cluster ${c}"
+        confluent kafka cluster use ${c} 2>/dev/null
+        echo "----> Cluster ACLs...."  >> $report
+        confluent kafka acl list --cluster ${c} --environment ${f}  -o yaml  > /tmp/clusteracl.txt 2>/dev/null
+        clusteracl=($(cat /tmp/clusteracl.txt | grep operation: | cut -d ':' -f 2 | wc -l))
+        confluent api-key create --resource ${c} --environment ${f} -o yaml  > /tmp/clusterapi.txt 2>/dev/null
+        key=($(cat /tmp/clusterapi.txt | grep key: | cut -d ':' -f 2 ))
+        secret=($(cat /tmp/clusterapi.txt | grep secret: | cut -d ':' -f 2 ))
+        basic_auth=($(echo -n "${key}:${secret}" | base64))
+        confluent kafka cluster describe --environment ${f} -o yaml  > /tmp/clusterid.txt 2>/dev/null
+        restendpoint=($(cat /tmp/clusterid.txt | grep rest_endpoint: | cut -d ':' -f 3 ))
+        # curl show orphand accounts
+        url="https:"$restendpoint":443/kafka/v3/clusters/"${c}"/acls"
+        auth="Authorization: Basic "${basic_auth}
+        curl --request GET $url --header "Authorization: Basic ${basic_auth}" | jq > /tmp/clustercurlacl.txt 2>/dev/null
+        clusteraclcurl=($(cat /tmp/clustercurlacl.txt | grep \"operation\": | cut -d ':' -f 2 | wc -l))
+        # delete KEY again
+        confluent api-key delete  $key 2>/dev/null
+        totalacls=$((totalacls+$clusteracl))
+        totalaclscurl=$((totalaclscurl+$clusteraclcurl))
+        echo "----> Total Cluster ALCs is ${clusteracl} and maybe with orphaned ACLs is ${clusteraclcurl} for cluster ${c}"  >> $report
+    done
+    echo "--> END Environment ${f}"  >> $report
+    echo "*******************************************************************************************************************"  >> $report
+done
+echo "*******************************************************************************************************************"  >> $report
+echo "** 1. ACLs in Total by confluent cli:    ${totalacls}   "  >> $report
+echo "** 2. ACLs in Total by curl:             ${totalaclscurl}   "  >> $report
+echo "**  If 2. > 1. it could be orphaned ACLs problem (ACLs without Service Account mapped) "  >> $report
+echo "*******************************************************************************************************************"  >> $report
+
+# Call ACL  analytics
+echo "please wait, the analysis will take a while (coming soon)..."
+# /usr/bin/python3 /confluent-cli/orphaned-sa-analytics.py /tmp/key_list.json /tmp/serviceaccount_list.json 
+
+echo "Orphand ACL analysis finished"
+echo "Report is stored here ${report}"

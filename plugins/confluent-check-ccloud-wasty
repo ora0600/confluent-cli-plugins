@@ -1,14 +1,23 @@
 #!/bin/bash
+#set -x 
 
+now=$(date +"%d.%m.%Y")
+report="/tmp/ccloud-overview-"${now}".txt"
 # Counter
 basic=0
 standard=0
 dedicated=0
 ksqldb=0
 connector=0
-
-echo "check out if confluent cloud org is wasty or tasty...wait a couple of seconds..."
-echo "*******************************************************************************************************************************"
+clusteracl=0
+totalschemas=0
+totalclusterapikey=0
+totalschemaapikey=0
+totalschemaregistry=0
+totalclusteracls=0
+echo "*******************************************************************************************************************"
+echo "check out if CEMEA SE team is wasty or tasty...wait a couple of seconds..."
+echo "**************************************** REPORT ${now} *******************************************************" > $report
 
 # check if standard clusters are running
 /usr/local/bin/confluent login >/dev/null
@@ -17,26 +26,33 @@ echo "**************************************************************************
 env_list=($(cat /tmp/env_list.txt | grep id: | cut -d ':' -f 2))
 
 for f in "${env_list[@]}"; do
-    echo "--> Environment ${f}"
+    echo "--> Environment ${f}" >> $report
     confluent environment use ${f} >/dev/null
     #echo " Cluster list for Environment ${f}"
     confluent schema-registry cluster describe -o yaml > /tmp/sr.txt 2>/dev/null
+    srid=($(cat /tmp/sr.txt | grep id: | cut -d ':' -f 2))
     srpackage=($(cat /tmp/sr.txt | grep package: | cut -d ':' -f 2))
     srservice_provider=($(cat /tmp/sr.txt | grep service_provider: | cut -d ':' -f 2))
     srservice_provider_region=($(cat /tmp/sr.txt | grep service_provider_region: | cut -d ':' -f 2))
-    srused_schemas=($(cat /tmp/sr.txt | grep used_schemas: | cut -d ':' -f 2))
-    echo "----> SR package ${srpackage} in ${srservice_provider} region ${srservice_provider_region} used schemas=${srused_schemas}"
+    srused_schemas=($(cat /tmp/sr.txt | grep used_schemas: | cut -d ':' -f 2 ))
+    schematas=${srused_schemas//\"}
+    totalschemas=$((totalschemas+schematas)) 
+    confluent api-key list --resource ${srid} --environment ${f} -o yaml > /tmp/srapikey.txt 2>/dev/null
+    srapikey=($(cat /tmp/srapikey.txt | grep key: | cut -d ':' -f 2 | wc -l))
+    totalschemaapikey=$((totalschemaapikey+$(echo ${srapikey}))) 
+    totalschemaregistry=$((totalschemaregistry+$(echo 1))) 
+    echo "----> SR package ${srpackage} in ${srservice_provider} region ${srservice_provider_region} used schemas=${srused_schemas} used Keys=${srapikey}"  >> $report
+    echo "----> Kafka clusters...." >> $report
     confluent kafka cluster list -o yaml > /tmp/cluster.txt 2>/dev/null
-    echo "----> Kafka clusters...."
-    confluent kafka cluster list -o human 
+    confluent kafka cluster list -o human >> $report
     cluster_list=($(cat /tmp/cluster.txt | grep id: | cut -d ':' -f 2))
     basic_cluster=($(cat /tmp/cluster.txt | grep BASIC | cut -d ':' -f 2))
     standard_cluster=($(cat /tmp/cluster.txt | grep STANDARD | cut -d ':' -f 2))
     dedicated_cluster=($(cat /tmp/cluster.txt | grep DEDICATED | cut -d ':' -f 2))
     #echo " KsqlDB list for Environment ${f}"
 #    /usr/local/bin/confluent ksql cluster list --environment ${f} -o yaml > /tmp/ksqldb.txt
-    echo "----> ksqlDB clusters...."
-    confluent ksql cluster list -o human
+    echo "----> ksqlDB clusters...." >> $report
+    confluent ksql cluster list -o human >> $report
     confluent ksql cluster list -o yaml > /tmp/ksqldb.txt 2>/dev/null
     ksqldb=$((ksqldb+$(cat /tmp/ksqldb.txt | grep id: | cut -d ':' -f 2 | wc -l)))
     if [[ ! -z "$basic_cluster" ]]
@@ -55,14 +71,46 @@ for f in "${env_list[@]}"; do
         #echo " use cluster ${c}"
         confluent kafka cluster use ${c} 2>/dev/null
         #echo "list connectors for cluster ${c} in environment ${f}"
-        echo "----> Connectors...."
-        confluent connect list --cluster ${c} --environment ${f} -o human
+        echo "----> Connectors...." >> $report
+        confluent connect list --cluster ${c} --environment ${f} -o human >> $report
         confluent connect list --cluster ${c} --environment ${f} -o yaml > /tmp/connector.txt 2>/dev/null
         connector=$((connector+$(cat /tmp/connector.txt | grep id: | cut -d ':' -f 2 | wc -l)))
+        echo "----> Cluster API Key...." >> $report
+        confluent api-key list --resource ${c} --environment ${f} -o yaml > /tmp/clusterapikey.txt 2>/dev/null
+        clusterapikey=($(cat /tmp/clusterapikey.txt | grep key: | cut -d ':' -f 2 | wc -l))
+        totalclusterapikey=$((totalclusterapikey+$(echo ${clusterapikey}))) 
+        echo "----> Total Cluster API Keys is ${clusterapikey} for cluster ${c}" >> $report
+        echo "----> Cluster ACLs...." >> $report
+        confluent kafka acl list --cluster ${c} --environment ${f} -o yaml > /tmp/clusteracl.txt 2>/dev/null
+        clusteracl=($(cat /tmp/clusteracl.txt | grep operation: | cut -d ':' -f 2 | wc -l))
+        totalclusteracls=$((totalclusteracls+$(echo ${clusteracl}))) 
+        echo "----> Total Cluster ALCs is ${clusteracl} for cluster ${c}" >> $report
     done
-    echo "--> END Environment ${f}"
-    echo "*******************************************************************************************************************************"
+    echo "--> END Environment ${f}" >> $report
+    echo "*******************************************************************************************************************" >> $report
 done
-echo "*******************************************************************************************************************************"
-echo "** Running  ${basic} BASIC Cluster, ${standard} STANDARD Clusters, ${dedicated} DEDICATED Clusters, ${ksqldb} ksqlDB Apps and ${connector} Connectors **" 
-echo "*******************************************************************************************************************************"
+echo "*******************************************************************************************************************" >> $report
+echo "** Running  ${basic} BASIC Cluster, ${standard} STANDARD Clusters, ${dedicated} DEDICATED Clusters, ${ksqldb} ksqlDB Apps and ${connector} Connectors " >> $report
+echo "*******************************************************************************************************************" >> $report
+echo "*******************************************************************************************************************" >> $report
+echo "** Schema API Keys in Total:    ${totalschemaapikey}   " >> $report
+echo "** Schematas used in Total:     ${totalschemas}        " >> $report
+echo "** Schema Registries in Total:  ${totalschemaregistry} " >> $report
+echo "*******************************************************************************************************************" >> $report
+confluent api-key list --resource cloud -o yaml > /tmp/cloudapikey.txt 2>/dev/null
+apikeycloud_list=($(cat /tmp/cloudapikey.txt | grep key: | cut -d ':' -f 2 | wc -l))
+echo "** Cloud API Keys in Total:     ${apikeycloud_list}   " >> $report
+echo "** Cluster API keys in Total:   ${totalclusterapikey} " >> $report
+echo "*******************************************************************************************************************" >> $report
+confluent iam service-account list -o yaml > /tmp/sa.txt 2>/dev/null
+salist=($(cat /tmp/sa.txt | grep id: | cut -d ':' -f 2 | wc -l))
+confluent iam user list -o yaml > /tmp/user.txt 2>/dev/null
+userlist=($(cat /tmp/user.txt | grep id: | cut -d ':' -f 2 | wc -l))
+echo "** Service Accounts in Total:   ${salist}   " >> $report
+echo "** Cloud Users in Total:        ${userlist} " >> $report
+echo "** ACLs in Total w/o orphanded: ${totalclusteracls} " >> $report
+echo "*******************************************************************************************************************" >> $report
+
+cat $report
+
+echo "Report is stored here ${report}

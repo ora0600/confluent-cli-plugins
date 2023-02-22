@@ -1,0 +1,26 @@
+#!/bin/bash
+auditapikey=SETYOUROWNAUDITLOGKEY
+# get audit infos
+confluent login --save
+confluent audit-log describe -o yaml > /tmp/auditlog.txt
+clusterid=($(cat /tmp/auditlog.txt | grep cluster_id: | cut -d ':' -f 2 ))
+envid=($(cat /tmp/auditlog.txt | grep environment_id: | cut -d ':' -f 2 ))
+sa=($(cat /tmp/auditlog.txt | grep service_account_id: | cut -d ':' -f 2 ))
+topic=($(cat /tmp/auditlog.txt | grep topic_name: | cut -d ':' -f 2 ))
+confluent environment use $envid
+confluent kafka cluster use $clusterid
+# Show existings API Keys
+confluent api-key list --resource $clusterid
+# set API key
+confluent api-key store $auditapikey --resource $clusterid --environment  $envid @mysecret.txt
+confluent api-key use $auditapikey --resource $clusterid
+#consume 
+#confluent kafka topic consume -b $topic
+#confluent kafka topic consume -b $topic --cluster $clusterid > /tmp/audit-events.json &
+#tail -f /tmp/audit-events.json | grep 'kafka.Authentication' | jq .data.authenticationInfo.metadata.identifier > /tmp/recently-used-api-keys.txt &
+#tail -f /tmp/recently-used-api-keys.txt
+echo "Start Audit Log consumption..."
+confluent kafka topic consume -b $topic --cluster $clusterid > /tmp/audit-events.json
+cat /tmp/audit-events.json | grep 'kafka.Authentication' | jq .data.authenticationInfo.metadata.identifier > /tmp/recently-used-api-keys.txt
+echo "Used keys are ..."
+sort /tmp/recently-used-api-keys.txt | uniq

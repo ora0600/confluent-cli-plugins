@@ -1,5 +1,8 @@
 #!/bin/bash
 
+now=$(date +"%d.%m.%Y")
+report="/tmp/ccloud-apikey-"${now}".txt"
+
 echo "search for API key zombies...."
 echo "...is the user or service account or cluster still available...."
 # check if standard clusters are running login
@@ -13,7 +16,7 @@ echo "...is the user or service account or cluster still available...."
 
 # Call API key analytics
 echo "please wait, the analysis will take a while..."
-/usr/local/Cellar/python@3.8/3.8.6_2/bin/python3 /confluent-cli/api-key-analytics.py /tmp/key_list.json /tmp/environment_list.json 
+/usr/local/bin/python3 /confluent-cli/api-key-analytics.py /tmp/key_list.json /tmp/environment_list.json > $report
 
 echo "API key analysis finished"
 

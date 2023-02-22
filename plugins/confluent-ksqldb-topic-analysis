@@ -1,5 +1,8 @@
 #!/bin/bash
 
+now=$(date +"%d.%m.%Y")
+report="/tmp/ccloud-apikey-"${now}".txt"
+
 echo "search for ksqldb topics which having no ksqldb cluster anymore...."
 # check if standard clusters are running login
 /usr/local/bin/confluent login >/dev/null
@@ -9,7 +12,7 @@ echo "search for ksqldb topics which having no ksqldb cluster anymore...."
 
 # Call API key analytics
 echo "please wait, the analysis will take a while..."
-/usr/local/Cellar/python@3.8/3.8.6_2/bin/python3 /confluent-cli/ksqldb-topic-analytics.py /tmp/environment_list.json 
+/usr/local/bin/python3 /confluent-cli/ksqldb-topic-analytics.py /tmp/environment_list.json > $report
 
 echo "API key analysis finished"
 

@@ -5,7 +5,7 @@ echo "Show current service quota usage from today: ${now}"
 user='add your own key'
 
 # service quota sample
-cd ~/Demos/ccloud/service-quota
+cd ccloud/service-quota
 echo "#################" > service_quota_${now}.txt 2>/dev/null
 echo "Which quota codes are available" >> service_quota_${now}.txt 2>/dev/null
 curl --request GET \

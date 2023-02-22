@@ -1,4 +1,6 @@
 #!/bin/bash
+now=$(date +"%d.%m.%Y")
+report="/tmp/ccloud-apikey-"${now}".txt"
 
 echo "search for servive accounts having no API key..."
 # check if standard clusters are running login
@@ -12,7 +14,7 @@ echo "search for servive accounts having no API key..."
 
 # Call API key analytics
 echo "please wait, the analysis will take a while..."
-/usr/local/Cellar/python@3.8/3.8.6_2/bin/python3 /confluent-cli/sa-analytics.py /tmp/key_list.json /tmp/serviceaccount_list.json 
+/usr/local/bin/python3 /confluent-cli/sa-analytics.py /tmp/key_list.json /tmp/serviceaccount_list.json > $report
 
 echo "Service Account analysis finished"
 
