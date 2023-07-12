@@ -1,15 +1,38 @@
 #!/bin/bash
+# Explanation; This script is deleting any keys or ACLs, it das check the situation and generate a report.
+# The logic is:
+# For all environments
+#    For all Kafka clusters in environment
+#		A. check ACLS with Confluent CLI
+#                B. check ACLS with API and curl
+#                If  A. != B. Then
+#                      Orphaned acts is given
+#                       For all cluster acls
+#                            Check if service account is existing
+#                       End For all cluster acls
+#                End if
+#    End For all Kafka clusters in environment
+# End for all environments
+
+# Setup config ##########################
+#
 now=$(date +"%d.%m.%Y")
-report="/tmp/ccloud-orphaned-acls-"${now}".txt"
+report="/tmp/ccloud-secemea-orphaned-acls-"${now}".txt"
+reportsalist="/tmp/ccloud-secemea-orphaned-acls-"${now}"_SA-LIST-notexists.txt"
+
+# Cloud API Key to list Service accounts
+CLOUDKEY=<YOUR OWN CLOUD KEY in BAse64 Format>
 
 # Counter
 totalacls=0
 totalaclscurl=0
 totalenvs=0
 totalclusters=0
+# END Setup config ##########################
+
 
 echo "search for orphaned ACLs having no account aligned..."
-echo "********************************* REPORT Orphanded ACLS ${now} **************************************************" > $report
+echo "********************************* REPORT Orphaned ACLS ${now} **************************************************" > $report
 
 # check if standard clusters are running login
 /usr/local/bin/confluent login >/dev/null
@@ -46,11 +69,42 @@ for f in "${env_list[@]}"; do
         auth="Authorization: Basic "${basic_auth}
         curl --request GET $url --header "Authorization: Basic ${basic_auth}" | jq > /tmp/clustercurlacl.txt 2>/dev/null
         clusteraclcurl=($(cat /tmp/clustercurlacl.txt | grep \"operation\": | cut -d ':' -f 2 | wc -l))
-        # delete KEY again
-        confluent api-key delete  $key 2>/dev/null
+        cluster_acllist=($(cat /tmp/clustercurlacl.txt | grep \"principal\": | cut -d ':' -f 3 | tr -d '",'))
         totalacls=$((totalacls+$clusteracl))
         totalaclscurl=$((totalaclscurl+$clusteraclcurl))
         echo "----> Total Cluster ALCs is ${clusteracl} and maybe with orphaned ACLs is ${clusteraclcurl} for cluster ${c}"  >> $report
+        # if there is problem, research deeper
+        if [ $clusteracl != $clusteraclcurl ]
+        then
+            echo "-------> Need deeper research, we have orphaned ACLs here"
+            echo "-------> Need deeper research, we have orphaned ACLs here"  >> $report
+            #check now 
+            urlcloud="https://api.confluent.cloud/service_accounts"
+            echo "List of Service Accounts which do not exists anymore" > $reportsalist
+            echo "=====================================================" >> $reportsalist
+            for d in "${cluster_acllist[@]}"; do
+                # First get the ID only without User:
+                echo "Service ID is ${d} in cluster ${c}" >> $report
+                # Check is service is available
+                if [ -z ${d} -eq 0 ]
+                then
+                   echo "Service ID is ${d} is empty in cluster ${c}" >> $report
+                else
+                        curl --request GET $urlcloud --header "Authorization: Basic ${CLOUDKEY}" | jq ".users[] | select(.id == ${d})" > /tmp/clustercurlaclsacheck.txt 2>/dev/null
+                        SANUMID=($(cat /tmp/clustercurlaclsacheck.txt | grep \"id\": | cut -d ':' -f 2 | tr -d ','))
+                        if [ -z $SANUMID ]
+                        then
+                            echo "---------> ACL is on Service ID ${d}, which is not availabe anymore, ACL is orphaned and can be deleted"
+                            echo "---------> ACL is on Service ID ${d}, which is not availabe anymore, ACL is orphaned and can be deleted"  >> $report
+                            # All not existing SA, where the ACL can deleted
+                            echo "$SANUMID" >> $reportsalist
+                        fi
+                fi
+            done 
+        fi
+        # delete KEY again
+        echo "Delete temp Key ${key} for checking ACLs"
+        confluent api-key delete  $key --force 2>/dev/null
     done
     echo "--> END Environment ${f}"  >> $report
     echo "*******************************************************************************************************************"  >> $report
@@ -62,8 +116,13 @@ echo "**  If 2. > 1. it could be orphaned ACLs problem (ACLs without Service Acc
 echo "*******************************************************************************************************************"  >> $report
 
 # Call ACL  analytics
-echo "please wait, the analysis will take a while (coming soon)..."
-# /usr/bin/python3 /confluent-cli/orphaned-sa-analytics.py /tmp/key_list.json /tmp/serviceaccount_list.json 
+# echo "please wait, the analysis will take a while (coming soon)..."
+# /usr/bin/python3 /Users/cmutzlitz/Demos/confluent-cli/orphaned-sa-analytics.py /tmp/key_list.json /tmp/serviceaccount_list.json 
+# Delete duplicated from SA list
+sort ${reportsalist} | uniq -u
 
 echo "Orphand ACL analysis finished"
 echo "Report is stored here ${report}"
+echo "Report of all not exists Service accounts is stored here ${reportsalist}"
+echo "You will get the ACLS of a specific Service Account by searching like this:"
+echo "curl --request GET --url https://cluster.region.cloup.confluent.cloud:443/kafka/v3/clusters/clusterid/acls?principal=\"User%3AService-Account-ID\" --header 'Authorization: Basic cloudAPIKEY as Base64' | jq"
