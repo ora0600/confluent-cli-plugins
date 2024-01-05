@@ -1,0 +1,63 @@
+#!/bin/bash
+# usage: confluent-check-internal-topics clusterID and EnvironmentID
+#set -x 
+
+
+if [ "$*" == "" ]; then
+    >&2 echo "No arguments provided, please call confluent-check-internal-topics clusterID and EnvironmentID"
+    exit 1
+fi
+
+
+export CLUSTER_ID=$1                
+export ENV_ID=$2                    
+export MYPATH=/usr/local/bin
+  
+now=$(date +"%d.%m.%Y")
+report="/tmp/ccloud-cluster-${CLUSTER_ID}-internal-topics-overview-"${now}".sh"
+
+topics=0
+internal_topics=0
+
+echo "*******************************************************************************************************************"
+echo "check out internal_topics starting _confluent* , _schemas*, confluent.connect* ..."
+echo "**************************************** REPORT ${now} *******************************************************" 
+
+# check if standard clusters are running
+$MYPATH/confluent login >/dev/null
+
+$MYPATH/confluent kafka topic list --environment $ENV_ID --cluster $CLUSTER_ID -o yaml > /tmp/topic_list.txt 2>/dev/null
+topic_list=($(cat /tmp/topic_list.txt | grep name: | cut -d ':' -f 2))
+echo "#!/bin/bash" > $report
+
+for f in "${topic_list[@]}"; do
+    topics=$(($topics+1))
+    echo "check if topic ${f} in internal"
+    if [[ ${f} == *"_confluent"* ]]; then
+        echo "===> topic is internal" 
+        internal_topics=$(($internal_topics+1))
+        echo "${MYPATH}/confluent kafka topic delete ${f} --force --environment ${ENV_ID} --cluster ${CLUSTER_ID}" >> $report
+    elif [[ ${f} == *"_schemas"* ]]; then
+        echo "===> topic is internal" 
+        internal_topics=$(($internal_topics+1))
+        echo "${MYPATH}/confluent kafka topic delete ${f} --force --environment ${ENV_ID} --cluster ${CLUSTER_ID}" >> $report
+    elif [[ ${f} == *"confluent.connect"* ]]; then
+        echo "===> topic is internal" 
+        internal_topics=$(($internal_topics+1))
+        echo "${MYPATH}/confluent kafka topic delete ${f} --force --environment ${ENV_ID} --cluster ${CLUSTER_ID}" >> $report
+    else    
+        echo "===> kein internes Topic"
+    fi
+done
+echo "*******************************************************************************************************************" 
+echo "** Having internal Topics ${internal_topics} of ${topics}   " 
+echo "*******************************************************************************************************************" 
+
+if [[ ${internal_topics} == "0" ]]; then
+    echo "No internal topics found"
+else
+    echo "Delete these internal topics"
+    cat $report
+    echo "Report is stored here ${report}"
+    echo " bash ${report}"
+fi
