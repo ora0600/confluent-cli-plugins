@@ -10,7 +10,8 @@ This repo will show some simple plugins for `confluent cli`
            Plugin Name                     |              File Path                                
 -------------------------------------------+---------------------------------------------------
   confluent api key analysis               | /confluent-cli/confluent-api-key-analysis       
-  confluent check ccloud wasty             | /confluent-cli/confluent-check-ccloud-wasty     
+  confluent check ccloud wasty             | /confluent-cli/confluent-check-ccloud-wasty
+  confluent check internal topics          | ~/Demos/confluent-cli/confluent-check-internal-topics  
   confluent get service quota              | /confluent-cli/confluent-get-service-quota      
   confluent ksqldb topic analysis          | /confluent-cli/confluent-ksqldb-topic-analysis  
   confluent sa wo keys                     | /confluent-cli/confluent-sa-wo-keys   
@@ -23,6 +24,7 @@ This repo will show some simple plugins for `confluent cli`
 ```
 * confluent api key analysis : will find api key with dropped resources
 * confluent check ccloud wasty: will count all billable resources
+* confluent check internal topics: will show all internal topics and generate a bash script to delete them, per cluster and environment
 * confluent get service quota: will give an overview of applied service quota limits, and the current usage
 * confluent ksqldb topic analysis: Will show all ksqlDB topics which having no ksqlDB cluster anymore and could be deleted
 * confluent sa wo keys: will find service accounts without a API Key
