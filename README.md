@@ -11,7 +11,7 @@ This repo will show some simple plugins for `confluent cli`
 -------------------------------------------+---------------------------------------------------
   confluent api key analysis               | /confluent-cli/confluent-api-key-analysis       
   confluent check ccloud wasty             | /confluent-cli/confluent-check-ccloud-wasty
-  confluent check internal topics          | ~/Demos/confluent-cli/confluent-check-internal-topics  
+  confluent check internal topics          | /confluent-cli/confluent-check-internal-topics  
   confluent get service quota              | /confluent-cli/confluent-get-service-quota      
   confluent ksqldb topic analysis          | /confluent-cli/confluent-ksqldb-topic-analysis  
   confluent sa wo keys                     | /confluent-cli/confluent-sa-wo-keys   
