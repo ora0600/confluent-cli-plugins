@@ -43,3 +43,4 @@ I do have bash and Python scripts. So, please install python 3.8.
 
 Additional plug-ins
 * Please check Repo for [Schema deletion tool](https://github.com/confluentinc/schema-deletion-tool)
+* Please check Repo [https://github.com/bbejeck/confluent-cli-plugins](https://github.com/bbejeck/confluent-cli-plugins)
